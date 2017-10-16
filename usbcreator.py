@@ -30,6 +30,11 @@ class MeinDialog(QtWidgets.QDialog):
         for dev in self.proposed:
             self.checkDevice(dev)
         
+        if len(self.devices) > 0:
+            self.ui.copy.setEnabled(True)
+        else: 
+            self.ui.copy.setEnabled(False)
+        
         
         #delete all widgets
         items = self.get_list_widget_items()
@@ -86,7 +91,7 @@ class MeinDialog(QtWidgets.QDialog):
        
         usbbytesize = float(usbbytesize)/1000/1000/1000
        
-        item.info = QtWidgets.QLabel('      %s %s  %.2fGB ( %s )' % (device_info, devicemodel, usbbytesize ,item.id ))
+        item.info = QtWidgets.QLabel('      %s %s ( %s ) %.2fGB'  % (device_info, devicemodel, item.id, usbbytesize ))
         item.info.setAlignment(QtCore.Qt.AlignRight)
         
         item.warn = QtWidgets.QLabel('')
@@ -246,9 +251,18 @@ class MeinDialog(QtWidgets.QDialog):
                 print copydata
                 print "-------"
         
-        command = "./getflashdrive.sh copy %s %s %s" %(item.sharesize, copydata, item.id )
-        self.ui.close()
-        # os.system(command)
+                command = "./getflashdrive.sh copy %s %s %s" %(item.sharesize, copydata, item.id )
+        
+                self.ui.close()
+                # os.system(command)
+        
+        else:
+            return
+                
+                
+                        
+                        
+                        
             
             
             
