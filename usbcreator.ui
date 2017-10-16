@@ -127,7 +127,7 @@
              <bool>false</bool>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-color:rgba(100,255,100,0.5);</string>
+             <string notr="true">background-color:rgba(100,200,100,0.5);</string>
             </property>
             <property name="text">
              <string>USB Sticks suchen</string>
@@ -172,6 +172,12 @@
             </property>
             <property name="showDropIndicator" stdset="0">
              <bool>false</bool>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>160</width>
+              <height>90</height>
+             </size>
             </property>
             <property name="resizeMode">
              <enum>QListView::Adjust</enum>

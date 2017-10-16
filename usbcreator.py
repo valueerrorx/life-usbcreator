@@ -4,7 +4,7 @@ import sys, os, string, ipaddress
 from PyQt5 import QtCore, uic, QtWidgets
 from PyQt5.QtGui import *
 from subprocess import Popen, PIPE
-import subprocess, sip
+import subprocess, sip, time
 
 
 
@@ -41,6 +41,7 @@ class MeinDialog(QtWidgets.QDialog):
         for item in items:
             sip.delete(item)
         
+        time.sleep(2)
         
         #build size information for every device
         for deviceentry in self.devices:
@@ -83,7 +84,7 @@ class MeinDialog(QtWidgets.QDialog):
         
     def addNewListItem(self, usbdev, device_info, devicemodel, usbbytesize):
         item = QtWidgets.QListWidgetItem()
-        item.setSizeHint(QtCore.QSize(60, 90));
+        item.setSizeHint(QtCore.QSize(160, 90));
         #store important information on the widget
         item.id = usbdev 
         item.size = usbbytesize
@@ -202,7 +203,6 @@ class MeinDialog(QtWidgets.QDialog):
             pixmap = QPixmap('pixmaps/driveyes.png')
             pixmap = pixmap.scaled(QtCore.QSize(64,64))
             item.picture.setPixmap(pixmap)
-            #item.picture.setAlignment(QtCore.Qt.AlignRight)
             item.sharesize = sharesize
             item.warn.setText("<b>Alles Ok</b>")
             self.ui.copy.setEnabled(True)
@@ -258,29 +258,18 @@ class MeinDialog(QtWidgets.QDialog):
                 print item.id
                 print item.size
                 print copydata
+                print item.info.text()
                 print "-------"
         
-                command = "./getflashdrive.sh copy %s %s %s" %(item.sharesize, copydata, item.id )
-        
-                self.ui.close()
-                # os.system(command)
+                command = "./getflashdrive.sh copy %s %s %s" %(item.sharesize, copydata, item.id,  )
+                os.system(command)
+                #self.ui.close()
+                
         
         else:
             return
                 
                 
-                        
-                        
-                        
-            
-            
-            
-            
-        
-   
-    
-
-
 
     def onAbbrechen(self):    # Exit button - remove ALL lockfiles
         for i in self.proposed:

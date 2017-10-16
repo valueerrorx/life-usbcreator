@@ -15,19 +15,6 @@ getsizeInGB(){  ## get and display size of flashdrive to give the user more info
     USBBYTESIZE=$(lsblk -d -o SIZE  -n -r -b /dev/${USB}) 
     USBSIZE=$( expr ${USBBYTESIZE} / 1024 / 1024)
 }
-
-if  [[( $1 = "checksize" ) ]]
-then
-    USB=$2
-    getsizeInGB
-    printf $USBSIZE
-    exit 0
-fi
-
-
-
-
-
 #---------------------------------------------------------#"
 #      check for lockfiles - delete if not use            #"
 #---------------------------------------------------------#"  
@@ -51,16 +38,17 @@ check(){  #tests for lock files and process threads - removes unnesessary lockfi
     fi
 }
 
+
+
+
+
+
+
 #---------------------------------------------------------#"
 #      SEARCH FOR DEVICE      START                       #"
 #---------------------------------------------------------#"  
 if  [[( $1 = "check" ) ]]
 then
-
-
-
-
-
     #---------------------------------------------------------#"
     #   set the usb device a target for the clone process     #"
     #---------------------------------------------------------#"  
@@ -88,9 +76,6 @@ then
         SDX="/dev/$USB" 
         printf "$USB;$DEVICEVENDOR;$DEVICEMODEL;$DEVICESIZE;$USBBYTESIZE"
     }
-    
-    
-
     #---------------------------------------------------------#"
     #                 DETECTING USB DEVICE                    #"
     #---------------------------------------------------------#"
@@ -120,8 +105,6 @@ then
     else
         printf "$USB;NOUSB"    #kein usb stick gefunden
     fi
-    
-  
 
 fi
 #---------------------------------------------------------#"
@@ -148,6 +131,8 @@ then
     SHARESIZE=$2
     COPYCASPER=$3
     USB=$4
+    TITLE=$5
+    
     SDX="/dev/$USB" 
 
     echo $LIFESIZE
@@ -161,7 +146,7 @@ then
 
 
     ## start progress with a lot of spaces (defines the width of the window - using geometry will move the window out of the center)
-    progress=$(kdialog --caption "LIFE"  --title "LIFE" --progressbar "USB Stick wird vorbereitet....                                                               ");
+    progress=$(kdialog --caption "${TITLE}"  --title "${TITLE}" --progressbar "USB Stick wird vorbereitet....                                                               ");
     qdbus $progress Set "" maximum 22
     sleep 0.5
         
