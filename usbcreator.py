@@ -38,8 +38,8 @@ class MeinDialog(QtWidgets.QDialog):
         
         #delete all widgets
         items = self.get_list_widget_items()
-        for widget in items:
-            sip.delete(widget)
+        for item in items:
+            sip.delete(item)
         
         
         #build size information for every device
@@ -50,7 +50,13 @@ class MeinDialog(QtWidgets.QDialog):
             devicesize = deviceentry[3]
             usbbytesize = deviceentry[4]
             self.createWidget(usbdev, device_info, devicemodel, usbbytesize)
-           
+        
+        
+        # do not allow copy if any of the flashdrives is too small
+        items = self.get_list_widget_items()  
+        for item in items:
+            if item.sharesize is 0:
+                self.ui.copy.setEnabled(False)
        
             
         
@@ -192,22 +198,25 @@ class MeinDialog(QtWidgets.QDialog):
         sharesize = self.getShareSize(item)
         
         if devicesize-6000-sharesize > 0:   #4GB for the system 2GB  casper-rw + SHARE
-            print "device to small"
+            print "device size ok"
             pixmap = QPixmap('pixmaps/driveyes.png')
             pixmap = pixmap.scaled(QtCore.QSize(64,64))
             item.picture.setPixmap(pixmap)
             #item.picture.setAlignment(QtCore.Qt.AlignRight)
             item.sharesize = sharesize
             item.warn.setText("<b>Alles Ok</b>")
+            self.ui.copy.setEnabled(True)
             return True
         else:
-            print "device to small"
+            print "device to small %s" % item.id
+            
             item.warn.setText("<b>Zu wenig Speicherplatz</b>")
             pixmap = QPixmap('pixmaps/driveno.png')
             pixmap = pixmap.scaled(QtCore.QSize(64,64))
             item.picture.setPixmap(pixmap)
             item.sharesize = 0
-            #item.picture.setAlignment(QtCore.Qt.AlignRight)
+            self.ui.copy.setEnabled(False)
+           
             return False
         
 
