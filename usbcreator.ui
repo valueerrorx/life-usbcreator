@@ -130,7 +130,7 @@
              <string notr="true">background-color:rgba(100,200,100,0.5);</string>
             </property>
             <property name="text">
-             <string>USB Sticks suchen</string>
+             <string>USB Stick Liste aktualisieren</string>
             </property>
            </widget>
           </item>
@@ -192,8 +192,21 @@
        </item>
        <item>
         <widget class="QCheckBox" name="copydata">
+         <property name="toolTip">
+          <string>Vorgenommene Änderungen am Originalsystem&lt;br&gt;werden auf die Kopien übertragen</string>
+         </property>
          <property name="text">
-          <string>Datenpartition übertragen</string>
+          <string>Angepasste Kopie</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="update">
+         <property name="toolTip">
+          <string> Eventuell vorhandene Daten- und Sharepartitionen &lt;br&gt;auf Ziel USB Sticks erhalten</string>
+         </property>
+         <property name="text">
+          <string>LiFE Update</string>
          </property>
         </widget>
        </item>

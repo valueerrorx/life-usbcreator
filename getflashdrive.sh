@@ -1,5 +1,4 @@
 #!/bin/bash
-# last update: 15.02.2017
 # by: thomas michael weissel
 # you may use and alter this script - please report fixes and enchancements to valueerror@gmail.com 
 # or to the google+ community "Free Open Source Software in Schools"
@@ -132,14 +131,13 @@ then
     COPYCASPER=$3
     USB=$4
     TITLE=$5
+    UPDATE=$6
+    
+    TITLE=${TITLE//[-]/ }
+
+    echo $TITLE
     
     SDX="/dev/$USB" 
-
-    echo $LIFESIZE
-    echo $SHARESIZE
-    echo $COPYCASPER
-    echo $SDX
-    
     #---------------------------------------------------------#"
     #     Open Progressbar for paritioning and syncing        #"
     #---------------------------------------------------------#"  
@@ -200,15 +198,18 @@ then
         
         qdbus $progress Set "" value 4
         qdbus $progress setLabelText "Dateisysteme werden erstellt...."
-        
+        sleep 0.5
         #         sudo mlabel -i ${SDX}1 ::SHARE
         #         sudo mlabel -i ${SDX}2 ::LIFESYSTEM
         #         sudo mlabel -i ${SDX}3 ::casper-rw
         
+        qdbus $progress setLabelText "Dateisysteme werden erstellt.... <br>Fat32 - SHARE"
         sudo mkfs.vfat -F 32 -n SHARE ${SDX}1
         sleep 0.5
+        qdbus $progress setLabelText "Dateisysteme werden erstellt.... <br>Fat32 - LIFECLIENT"
         sudo mkfs.vfat -F 32 -n LIFECLIENT ${SDX}2
         sleep 0.5
+        qdbus $progress setLabelText "Dateisysteme werden erstellt.... <br>Ext2 - casper-rw (Bitte warten!)"
         echo "mkfs.ext2"   #trying ext2 because a journalling fs on a flashdrive is probably to heavy
         sudo mkfs.ext2 -L casper-rw ${SDX}3 > /dev/null 2>&1  #hide output
         sleep 1
@@ -217,7 +218,12 @@ then
 
         #  teste ob paritionierung erfolgreich war
         
-        ISLIVE=$(ls -l /dev/disk/by-label/ |grep ${USB} |grep LIFE|awk '{print $9;}') 
+        #ISLIVE=$(ls -l /dev/disk/by-label/ |grep ${USB} |grep LIFE|awk '{print $9;}') 
+        ISLIVE=$(sudo mlabel -si /dev/${USB}2 |awk '{print $4}') 
+        
+        
+        echo "check for life partition"
+        echo "Label: $ISLIVE"
 
         if [[ ( "$ISLIVE" = "LIFECLIENT" ) ]];   #check if string not empty or null  (if life usb is found this ISLIVE returns a line
         then
@@ -229,7 +235,7 @@ then
             qdbus $progress setLabelText "USB Kopie abgebrochen" 
             sleep 0.5
             qdbus $progress close 
-            kdialog  --caption "LIFE"  --title "LIFE" --msgbox "USB Gerät: $DEVICEVENDOR $DEVICEMODEL $DEVICESIZE \n\nUSB Stick Kopie fehlgeschlagen!\n\n"  > /dev/null 2>&1 
+            exec kdialog  --caption "LIFE"  --title "LIFE" --msgbox "USB Gerät: $TITLE \n\nProblem bei der Partitionierung.\nUSB Stick Kopie fehlgeschlagen!\n\n"  > /dev/null 2>&1 & 
             echo "no valid life partitions found - paritioning failed"
             exit 0
         fi
@@ -241,26 +247,28 @@ then
     
     ## IF update -  no partitioning  - check partitions and sync system 
     
-    ISLIVE=$(ls -l /dev/disk/by-label/ |grep ${USB} |grep LIFE|awk '{print $9;}') 
-    
-    if [[  ( "$ISLIVE" = "LIFECLIENT" ) ]];   #check if string not empty or null  (if life usb is found this ISLIVE returns a line
+    if [[( $UPDATE = "True"  )]]
     then
-    
-        kdialog  --caption "LIFE"  --title "LIFE" --yesno "Wollen sie das bestehende System updaten?\n\nAustauschpartition und /home bleiben erhalten."  > /dev/null 2>&1 
-        if [ "$?" = 1 ]; then
-            echo "creating partitions"
-            partitiondevice
-        else
+        ISLIVE=$(sudo mlabel -si /dev/${USB}2 |awk '{print $4}') 
+        if [[  ( "$ISLIVE" = "LIFECLIENT" ) ]];   #check if string not empty or null  (if life usb is found this ISLIVE returns a line
+        then
+            qdbus $progress Set "" value 4
+            qdbus $progress setLabelText "Erhalte gefundene Partitionen casper-rw und share...."
             echo "keeping current partitions"
             ONLYUPDATE="true"
-            # clean tmp files and other stuff or delete files on casper-rw except /home/ to avoid conficts FIXME
-        fi;
-     
+        else
+            echo "creating partitions"
+            ONLYUPDATE="false"
+            partitiondevice
+        fi
     else
-        echo "not a life usb device"
+        echo "creating partitions"
+        ONLYUPDATE="false"
         partitiondevice
     fi
     
+   
+
     
     
     mountsystempartition(){   ## this function tests if the mount directory already exists and creates a mount directory with a unique name
@@ -294,7 +302,7 @@ then
     }
     mountsystempartition  
     
-    if [[ ( ${ONLYUPDATE}="true" ) ]];
+    if [[ ( ${ONLYUPDATE} = "true" ) ]];
     then
         sudo rm -r $MOUNTPOINT/boot/*
         sudo rm -r $MOUNTPOINT/casper/*
@@ -488,7 +496,7 @@ then
     fi
     
     check   #remove lock files and mount points
-    kdialog  --caption "LIFE"  --title "LIFE" --msgbox "USB Gerät: $DEVICEVENDOR $DEVICEMODEL $DEVICESIZE \n\nUSB Stick Kopie erfolgreich!\n\nSie können das Gerät nun entfernen."  > /dev/null 2>&1 
+    exec kdialog  --caption "LiFE"  --title "LiFE" --msgbox "USB Gerät: ${TITLE} \n\nUSB Stick Kopie erfolgreich!\n\nSie können das Gerät nun entfernen."  > /dev/null 2>&1 & 
 
 fi
 #---------------------------------------------------------#"

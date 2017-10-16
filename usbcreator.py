@@ -41,7 +41,7 @@ class MeinDialog(QtWidgets.QDialog):
         for item in items:
             sip.delete(item)
         
-        time.sleep(2)
+        #time.sleep(2)
         
         #build size information for every device
         for deviceentry in self.devices:
@@ -251,17 +251,23 @@ class MeinDialog(QtWidgets.QDialog):
         else:
             copydata = False
         
+        if self.ui.update.checkState():
+            update = True
+        else:
+            update = False
+        
         items = self.get_list_widget_items()
         if items:
             for item in items:
-                print item.sharesize
-                print item.id
-                print item.size
-                print copydata
-                print item.info.text()
+                #get rid of spaces an special chars in order to pass it as parameter - i know there is a better way ;-)
+                iteminfo = item.info.text().replace("(","").replace(")","").replace("  "," ").replace("   ","").replace(" ","-")
+                
                 print "-------"
-        
-                command = "./getflashdrive.sh copy %s %s %s" %(item.sharesize, copydata, item.id,  )
+                print iteminfo
+                print "-------"
+                 
+                #run command with & (non blocking) for parallel copy..  i wonder if partitioning would kill everything or rsync
+                command = "./getflashdrive.sh copy %s %s %s %s %s" %(item.sharesize, copydata, item.id, iteminfo, update  )
                 os.system(command)
                 #self.ui.close()
                 
