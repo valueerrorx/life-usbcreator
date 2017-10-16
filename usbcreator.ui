@@ -69,6 +69,9 @@
      <property name="accessibleName">
       <string/>
      </property>
+     <property name="layoutDirection">
+      <enum>Qt::RightToLeft</enum>
+     </property>
      <property name="tabPosition">
       <enum>QTabWidget::North</enum>
      </property>
@@ -80,14 +83,14 @@
      </property>
      <property name="iconSize">
       <size>
-       <width>24</width>
-       <height>24</height>
+       <width>32</width>
+       <height>32</height>
       </size>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="icon">
        <iconset>
-        <normaloff>drive.png</normaloff>drive.png</iconset>
+        <normaloff>pixmaps/drive.png</normaloff>pixmaps/drive.png</iconset>
       </attribute>
       <attribute name="title">
        <string>Übersicht</string>
@@ -192,16 +195,16 @@
         <widget class="QWidget" name="widget_2" native="true">
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
-           <widget class="QPushButton" name="exit">
+           <widget class="QPushButton" name="copy">
             <property name="text">
-             <string>Abbrechen</string>
+             <string>USB Stick Kopie starten</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="copy">
+           <widget class="QPushButton" name="exit">
             <property name="text">
-             <string>USB Stick Kopie starten</string>
+             <string>Abbrechen</string>
             </property>
            </widget>
           </item>

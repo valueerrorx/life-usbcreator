@@ -13,7 +13,7 @@ class MeinDialog(QtWidgets.QDialog):
     def __init__(self):
         QtWidgets.QDialog.__init__(self)
         self.ui = uic.loadUi("usbcreator.ui")        # load UI
-        self.ui.setWindowIcon(QIcon("drive.png"))
+        self.ui.setWindowIcon(QIcon("pixmaps/drive.png"))
         self.ui.search.clicked.connect(self.searchUSB)     
         self.ui.exit.clicked.connect(self.onAbbrechen)        # setup Slots
         self.ui.copy.clicked.connect(self.startCopy)
@@ -78,7 +78,7 @@ class MeinDialog(QtWidgets.QDialog):
         item.size = usbbytesize
         item.sharesize = 2000
 
-        pixmap = QPixmap('drive.png')
+        pixmap = QPixmap('pixmaps/drive.png')
         pixmap = pixmap.scaled(QtCore.QSize(64,64))
         item.picture = QtWidgets.QLabel()
         item.picture.setPixmap(pixmap)
@@ -188,7 +188,7 @@ class MeinDialog(QtWidgets.QDialog):
         
         if devicesize-6000-sharesize > 0:   #4GB for the system 2GB  casper-rw + SHARE
             print "device to small"
-            pixmap = QPixmap('driveyes.png')
+            pixmap = QPixmap('pixmaps/driveyes.png')
             pixmap = pixmap.scaled(QtCore.QSize(64,64))
             item.picture.setPixmap(pixmap)
             #item.picture.setAlignment(QtCore.Qt.AlignRight)
@@ -198,7 +198,7 @@ class MeinDialog(QtWidgets.QDialog):
         else:
             print "device to small"
             item.warn.setText("<b>Zu wenig Speicherplatz</b>")
-            pixmap = QPixmap('driveno.png')
+            pixmap = QPixmap('pixmaps/driveno.png')
             pixmap = pixmap.scaled(QtCore.QSize(64,64))
             item.picture.setPixmap(pixmap)
             item.sharesize = 0
