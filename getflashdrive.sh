@@ -136,6 +136,9 @@ then
     TITLE=${TITLE//[-]/ }
 
     echo $TITLE
+    echo $COPYCASPER
+    
+    #exit 0
     
     SDX="/dev/$USB" 
     #---------------------------------------------------------#"
@@ -491,7 +494,7 @@ then
             sleep 2
             qdbus $progress close 
         }
-
+        copycasper
     
     fi
     

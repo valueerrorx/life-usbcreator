@@ -41,7 +41,7 @@ class MeinDialog(QtWidgets.QDialog):
         for item in items:
             sip.delete(item)
         
-        #time.sleep(2)
+        
         
         #build size information for every device
         for deviceentry in self.devices:
@@ -84,7 +84,7 @@ class MeinDialog(QtWidgets.QDialog):
         
     def addNewListItem(self, usbdev, device_info, devicemodel, usbbytesize):
         item = QtWidgets.QListWidgetItem()
-        item.setSizeHint(QtCore.QSize(160, 90));
+        item.setSizeHint(QtCore.QSize(350, 90));
         #store important information on the widget
         item.id = usbdev 
         item.size = usbbytesize
@@ -122,9 +122,11 @@ class MeinDialog(QtWidgets.QDialog):
         grid.addWidget(item.warn, 2, 1)
         grid.addWidget(item.picture, 1, 0)
         grid.addWidget(item.comboBox, 1, 1)
+       
 
         widget = QtWidgets.QWidget()
         widget.setLayout(grid)
+        
         #widget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         #widget.customContextMenuRequested.connect(lambda: self._on_context_menu(item.pID, item.disabled))
         
