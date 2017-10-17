@@ -7,7 +7,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>392</width>
+    <width>415</width>
     <height>552</height>
    </rect>
   </property>
@@ -19,13 +19,13 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>392</width>
+    <width>415</width>
     <height>552</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>392</width>
+    <width>415</width>
     <height>552</height>
    </size>
   </property>
@@ -45,15 +45,21 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="minimumSize">
       <size>
-       <width>372</width>
+       <width>396</width>
        <height>534</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>396</width>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">
@@ -169,7 +175,7 @@
             </property>
             <property name="minimumSize">
              <size>
-              <width>350</width>
+              <width>370</width>
               <height>0</height>
              </size>
             </property>
@@ -187,7 +193,7 @@
             </property>
             <property name="iconSize">
              <size>
-              <width>340</width>
+              <width>370</width>
               <height>120</height>
              </size>
             </property>
@@ -199,7 +205,7 @@
             </property>
             <property name="gridSize">
              <size>
-              <width>340</width>
+              <width>370</width>
               <height>120</height>
              </size>
             </property>

@@ -84,7 +84,7 @@ class MeinDialog(QtWidgets.QDialog):
         
     def addNewListItem(self, usbdev, device_info, devicemodel, usbbytesize):
         item = QtWidgets.QListWidgetItem()
-        item.setSizeHint(QtCore.QSize(350, 120));
+        item.setSizeHint(QtCore.QSize(370, 120));
         #store important information on the widget
         item.id = usbdev 
         item.size = usbbytesize
@@ -125,12 +125,12 @@ class MeinDialog(QtWidgets.QDialog):
         grid = QtWidgets.QGridLayout()
         grid.setSpacing(0)
         grid.setRowStretch (1, 4)
-        grid.addWidget(item.info, 0, 1)
-        grid.addWidget(item.warn, 2, 1)
+        grid.addWidget(item.info, 0, 2)
+        grid.addWidget(item.warn, 2, 2)
         grid.addWidget(item.picture, 1, 0)
-        grid.addWidget(item.comboBox, 1, 1)
+        grid.addWidget(item.comboBox, 1, 2)
         grid.addWidget(item.progressbar, 2, 0)
-        grid.addWidget(item.placeholder, 3, 0)
+        grid.addWidget(item.placeholder, 3, 1)
        
 
         widget = QtWidgets.QWidget()
@@ -282,11 +282,13 @@ class MeinDialog(QtWidgets.QDialog):
                     for line in iter(p.stdout.readline, b''):
                         print line
                         item.warn.setText(line)
+                        item.warn.setAlignment(QtCore.Qt.AlignVCenter|QtCore.Qt.AlignRight)
                         completed += 5
                         
                         if "END" in line:
                             completed = 100
                             item.warn.setText("Kopiervorgang abgeschlossen")
+                            
                         item.progressbar.setValue(completed)
                             
                 p.wait()
