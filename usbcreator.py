@@ -17,7 +17,6 @@ class MeinDialog(QtWidgets.QDialog):
         self.ui.search.clicked.connect(self.searchUSB)     
         self.ui.exit.clicked.connect(self.onAbbrechen)        # setup Slots
         self.ui.copy.clicked.connect(self.startCopy)
-    
         self.proposed = ["sda","sdb","sdc","sdd","sde","sdf","sdg","sdh","sdi","sdj","sdk","sdl","sdm","sdn","sdo","sdp","sdq","sdr","sds","sdt","sdu","sdv","sdw","sdx","sdy","sdz"]
        
         
@@ -94,7 +93,7 @@ class MeinDialog(QtWidgets.QDialog):
         pixmap = pixmap.scaled(QtCore.QSize(64,64))
         item.picture = QtWidgets.QLabel()
         item.picture.setPixmap(pixmap)
-        item.picture.setAlignment(QtCore.Qt.AlignLeft)
+        item.picture.setAlignment(QtCore.Qt.AlignVCenter|QtCore.Qt.AlignLeft)
        
         usbbytesize = float(usbbytesize)/1000/1000/1000
        
@@ -104,7 +103,7 @@ class MeinDialog(QtWidgets.QDialog):
         item.warn = QtWidgets.QLabel('')
         item.warn.setAlignment(QtCore.Qt.AlignVCenter|QtCore.Qt.AlignRight)
         
-        item.placeholder = QtWidgets.QLabel('')
+        item.placeholder = QtWidgets.QLabel('      ')
         
         item.comboBox = QtWidgets.QComboBox()
         item.comboBox.addItem("0.5 GB")
@@ -118,9 +117,7 @@ class MeinDialog(QtWidgets.QDialog):
         item.comboBox.currentIndexChanged.connect(lambda: self.checkSize(item))
         
         item.progressbar= QtWidgets.QProgressBar(self)
-        item.progressbar.setAlignment(QtCore.Qt.AlignLeft)
-       # item.progressbar.setGeometry(200,80,250,20)
-        
+        item.progressbar.setInvertedAppearance(True)
         
         grid = QtWidgets.QGridLayout()
         grid.setSpacing(0)
@@ -130,8 +127,8 @@ class MeinDialog(QtWidgets.QDialog):
         grid.addWidget(item.picture, 1, 0)
         grid.addWidget(item.comboBox, 1, 2)
         grid.addWidget(item.progressbar, 2, 0)
-        grid.addWidget(item.placeholder, 3, 1)
-       
+        #grid.addWidget(item.placeholder, 3, 1)
+        grid.addWidget(item.placeholder, 3, 3)
 
         widget = QtWidgets.QWidget()
         widget.setLayout(grid)
@@ -270,31 +267,63 @@ class MeinDialog(QtWidgets.QDialog):
         items = self.get_list_widget_items()
         if items:
             for item in items:
+                    
+                self.ui.listWidget.scrollToItem(item,QtWidgets.QAbstractItemView.PositionAtTop)
                 #get rid of spaces an special chars in order to pass it as parameter - i know there is a better way ;-)
                 iteminfo = item.info.text().replace("(","").replace(")","").replace("  "," ").replace("   ","").replace(" ","-")
                 method = "copy"
                 #progressbar= Qtwidgets.QProgressBar(self)
                 #progressbar.setGeometry(200,80,250,20)
                 self.ui.copy.setEnabled(False)
-                completed = 0
+                self.ui.exit.setEnabled(False)
+                completed = float(0)
+                if update is True:   #less steps
+                    increment = float(2.5)
+                else:
+                    increment = float(1.0)
+                    
+                # ca 16 schritte im getflashdrive script + anzahl an files von rsync
+                # 84 schritte übrig (copy casper setzt progress nochmal auf 20 der einfachheit halber)
+                
                 p=Popen(['./getflashdrive.sh',str(method),str(item.sharesize), str(copydata), str(item.id), str(iteminfo), str(update)],stdout=PIPE, stderr=STDOUT, bufsize=1)
                 with p.stdout:
                     for line in iter(p.stdout.readline, b''):
-                        print line
+                        line = line.strip('\n')
                         item.warn.setText(line)
-                        item.warn.setAlignment(QtCore.Qt.AlignVCenter|QtCore.Qt.AlignRight)
-                        completed += 5
+                        print line
                         
-                        if "END" in line:
-                            completed = 100
+                        if "0%" not in line:    # rsync delivers 200 entries with 0% sometimes - do not increment
+                            completed += increment
+                        
+                        item.progressbar.setValue(completed)
+                        
+                        if "FILENUMBER" in line:   #keyword FILENUMBER liefert anzahl an files für rsync
+                            number=line.split(",")
+                            number=float(number[1])
+                            increment = float(84/number)
+                            item.progressbar.setValue(item.progressbar.value()+1) #aus irgendeinem grund wird setText nur dann durchgeführt wenn progressbar updated
+                            
+                        elif "CASPER" in line:   #keyword CASPER liefert anzahl an files für rsync
+                            number=line.split(",")
+                            number=float(number[1])
+                            item.progressbar.setValue(18)
+                            increment = float(80/number)
+                            item.progressbar.setValue(item.progressbar.value()+1)
+                        
+                        if "size" in line:  #rsync is finished - advance 1 step
+                            increment = float(1)   # progressbar geht nur weiter beim überschreiten ganzer zahlen - setze wieder auf 1 sonst werden letze einträge nicht visualisiert
+                            item.progressbar.setValue(item.progressbar.value()+1)
+                        
+                        elif "END" in line:
+                            item.progressbar.setValue(100)
                             item.warn.setText("Kopiervorgang abgeschlossen")
                             
-                        item.progressbar.setValue(completed)
+                        
                             
                 p.wait()
    
             self.ui.copy.setEnabled(True)
-        
+            self.ui.exit.setEnabled(True)
         else:
             return
                 
