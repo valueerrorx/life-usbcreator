@@ -135,10 +135,22 @@ then
     
     TITLE=${TITLE//[-]/ }
 
+    echo "testphase für progressbar"
+    sleep 0.5
     echo $TITLE
-    echo $COPYCASPER
+    echo "1111"
+    sleep 0.5
+    echo "2222"
+    sleep 0.5
+    echo "3333"
+    sleep 0.5
+    echo "4444"
+    sleep 0.5
+    echo "END"
+    exit 0
     
-    #exit 0
+    
+    
     
     SDX="/dev/$USB" 
     #---------------------------------------------------------#"
@@ -459,6 +471,10 @@ then
             PROGESSBARVALUE=5  # see last qdbus progress set value
             STEPS=10
             COUNTER=0
+            
+            # FIXME This ist the most hackish way i can imagine.. there must be a better way
+            # i think rsync is a good choice but redirecting nohup output of rsync to a file 
+            # and reading the file in a loop is weird.. very weird
 
             while [[(  $RSYNCPROCESS != "finished" )]]; do   
                 sleep 0.5  #pause between progress checks

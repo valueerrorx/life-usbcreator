@@ -3,7 +3,7 @@
 import sys, os, string, ipaddress
 from PyQt5 import QtCore, uic, QtWidgets
 from PyQt5.QtGui import *
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 import subprocess, sip, time
 
 
@@ -84,7 +84,7 @@ class MeinDialog(QtWidgets.QDialog):
         
     def addNewListItem(self, usbdev, device_info, devicemodel, usbbytesize):
         item = QtWidgets.QListWidgetItem()
-        item.setSizeHint(QtCore.QSize(350, 90));
+        item.setSizeHint(QtCore.QSize(350, 120));
         #store important information on the widget
         item.id = usbdev 
         item.size = usbbytesize
@@ -102,7 +102,9 @@ class MeinDialog(QtWidgets.QDialog):
         item.info.setAlignment(QtCore.Qt.AlignRight)
         
         item.warn = QtWidgets.QLabel('')
-        item.warn.setAlignment(QtCore.Qt.AlignRight)
+        item.warn.setAlignment(QtCore.Qt.AlignVCenter|QtCore.Qt.AlignRight)
+        
+        item.placeholder = QtWidgets.QLabel('')
         
         item.comboBox = QtWidgets.QComboBox()
         item.comboBox.addItem("0.5 GB")
@@ -115,6 +117,11 @@ class MeinDialog(QtWidgets.QDialog):
         item.comboBox.setCurrentIndex(2)
         item.comboBox.currentIndexChanged.connect(lambda: self.checkSize(item))
         
+        item.progressbar= QtWidgets.QProgressBar(self)
+        item.progressbar.setAlignment(QtCore.Qt.AlignLeft)
+       # item.progressbar.setGeometry(200,80,250,20)
+        
+        
         grid = QtWidgets.QGridLayout()
         grid.setSpacing(0)
         grid.setRowStretch (1, 4)
@@ -122,6 +129,8 @@ class MeinDialog(QtWidgets.QDialog):
         grid.addWidget(item.warn, 2, 1)
         grid.addWidget(item.picture, 1, 0)
         grid.addWidget(item.comboBox, 1, 1)
+        grid.addWidget(item.progressbar, 2, 0)
+        grid.addWidget(item.placeholder, 3, 0)
        
 
         widget = QtWidgets.QWidget()
@@ -263,16 +272,26 @@ class MeinDialog(QtWidgets.QDialog):
             for item in items:
                 #get rid of spaces an special chars in order to pass it as parameter - i know there is a better way ;-)
                 iteminfo = item.info.text().replace("(","").replace(")","").replace("  "," ").replace("   ","").replace(" ","-")
-                
-                print "-------"
-                print iteminfo
-                print "-------"
-                 
-                #run command with & (non blocking) for parallel copy..  i wonder if partitioning would kill everything or rsync
-                command = "./getflashdrive.sh copy %s %s %s %s %s" %(item.sharesize, copydata, item.id, iteminfo, update  )
-                os.system(command)
-                #self.ui.close()
-                
+                method = "copy"
+                #progressbar= Qtwidgets.QProgressBar(self)
+                #progressbar.setGeometry(200,80,250,20)
+                self.ui.copy.setEnabled(False)
+                completed = 0
+                p=Popen(['./getflashdrive.sh',str(method),str(item.sharesize), str(copydata), str(item.id), str(iteminfo), str(update)],stdout=PIPE, stderr=STDOUT, bufsize=1)
+                with p.stdout:
+                    for line in iter(p.stdout.readline, b''):
+                        print line
+                        item.warn.setText(line)
+                        completed += 5
+                        
+                        if "END" in line:
+                            completed = 100
+                            item.warn.setText("Kopiervorgang abgeschlossen")
+                        item.progressbar.setValue(completed)
+                            
+                p.wait()
+   
+            self.ui.copy.setEnabled(True)
         
         else:
             return
