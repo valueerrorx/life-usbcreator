@@ -342,7 +342,9 @@ class  Worker(QtCore.QObject):
                     if "size" in line:  #rsync is finished - advance 1 step
                         increment = float(1)   # progressbar geht nur weiter beim überschreiten ganzer zahlen - setze wieder auf 1 sonst werden letze einträge nicht visualisiert
                         item.progressbar.setValue(item.progressbar.value()+1)
-                    
+                    if "FAILED" in line:
+                        item.progressbar.setValue(100)
+                        item.warn.setText("Kopiervorgang fehlgeschlagen")
                     elif "END" in line:
                         item.progressbar.setValue(100)
                         item.warn.setText("Kopiervorgang abgeschlossen")

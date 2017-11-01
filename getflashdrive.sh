@@ -228,6 +228,7 @@ then
     }
 
     
+    PCOUNT="0"
     
     checkpart(){
         ##############9
@@ -244,18 +245,18 @@ then
             ##############
             
         else
-            kdialog --yesno "USB Gerät: $TITLE \n\nProblem bei der Partitionierung.\nPartitionierung wiederholen?" --title 'Partitionierung' --caption "Partitionierung"
-            if [ "$?" != 0 ]; then    #abbrechen
+            if [[( $PCOUNT = "0"  )]]
+            then
+                PCOUNT="1"
+                partitiondevice
+            else
                 check
                 ##############10
-                echo "USB Kopie abgebrochen" 
+                echo "FAILED" 
                 sleep 0.5
-                echo "END" 
                 ##############
                 exit 0
-            else
-                partitiondevice
-            fi;
+            fi
         fi
     }
     
