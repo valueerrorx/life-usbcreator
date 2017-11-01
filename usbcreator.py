@@ -18,12 +18,67 @@ class MeinDialog(QtWidgets.QDialog):
         self.ui.exit.clicked.connect(self.onAbbrechen)        # setup Slots
         self.ui.copy.clicked.connect(self.startCopy)
         self.proposed = ["sda","sdb","sdc","sdd","sde","sdf","sdg","sdh","sdi","sdj","sdk","sdl","sdm","sdn","sdo","sdp","sdq","sdr","sds","sdt","sdu","sdv","sdw","sdx","sdy","sdz"]
-       
+        
+        QtWidgets.QApplication.instance().aboutToQuit.connect(self.quit)
+        
+        self.extraThread = QtCore.QThread()
+        self.worker = Worker(self)
+        self.worker.moveToThread(self.extraThread)
+        self.extraThread.started.connect(self.worker.doCopy)
+        self.extraThread.finished.connect(self.finished)
+        
+        self.worker.processed.connect(self.updateProgress)
+        self.worker.finished.connect(self.finished)
+        
+        
+        
+    def  updateProgress(self,value,item,line):
+        
+        if "abgeschlossen" in line:
+            item.comboBox.setEnabled(True)
+        elif "fehlgeschlagen" in line:
+            pixmap = QPixmap('pixmaps/driveno.png')
+            pixmap = pixmap.scaled(QtCore.QSize(64,64))
+            item.picture.setPixmap(pixmap)
+            #make sure this process quits immediately
+            print "killing running subprocesses"
+            command = "sudo pkill -f rsync && sudo killall rsync"
+            os.system(command) 
+            
+  
+        
+        if "LOCK" in line:
+            self.ui.listWidget.scrollToItem(item,QtWidgets.QAbstractItemView.PositionAtTop)
+        else:
+            item.progressbar.setValue(int(value))
+            item.warn.setText(line)
         
         
     
+    def  quit(self):
+        # Quit the thread's event loop. Note that this *doesn't* stop tasks
+        # running in the thread, it just stops the thread from dispatching
+        # events.
+        self.extraThread.quit()
+        # Wait for the thread to complete. If the thread's task is not done,
+        # this will block.
+        self.extraThread.wait()
+       
+       
+    def  finished(self):
+        print  'finished'
+        self.ui.copy.setEnabled(True)
+        self.ui.exit.setEnabled(True)
+        self.ui.copydata.setEnabled(True)
+        self.ui.update.setEnabled(True)
+        
+       
+       
     def searchUSB(self):
         self.devices = []
+        #make sure nothing is running anymore
+        self.extraThread.quit()
+        self.extraThread.wait()
         
         #build devices list
         for dev in self.proposed:
@@ -34,13 +89,10 @@ class MeinDialog(QtWidgets.QDialog):
         else: 
             self.ui.copy.setEnabled(False)
         
-        
         #delete all widgets
         items = self.get_list_widget_items()
         for item in items:
             sip.delete(item)
-        
-        
         
         #build size information for every device
         for deviceentry in self.devices:
@@ -50,7 +102,6 @@ class MeinDialog(QtWidgets.QDialog):
             devicesize = deviceentry[3]
             usbbytesize = deviceentry[4]
             self.createWidget(usbdev, device_info, devicemodel, usbbytesize)
-        
         
         # do not allow copy if any of the flashdrives is too small
         items = self.get_list_widget_items()  
@@ -253,19 +304,10 @@ class MeinDialog(QtWidgets.QDialog):
             
             
     def startCopy(self):
-        if self.ui.copydata.checkState():
-            copydata = True
-        else:
-            copydata = False
-        
-        if self.ui.update.checkState():
-            update = True
-        else:
-            update = False
-        
         items = self.get_list_widget_items()
         if items:
             for item in items:
+<<<<<<< HEAD
                     
                 self.ui.listWidget.scrollToItem(item,QtWidgets.QAbstractItemView.PositionAtTop)
                 #get rid of spaces an special chars in order to pass it as parameter - i know there is a better way ;-)
@@ -325,20 +367,122 @@ class MeinDialog(QtWidgets.QDialog):
    
             self.ui.copy.setEnabled(True)
             self.ui.exit.setEnabled(True)
+=======
+                item.comboBox.setEnabled(False)
+            self.ui.copy.setEnabled(False)
+            self.ui.copydata.setEnabled(False)
+            self.ui.update.setEnabled(False)   
+            
+            self.extraThread.start()
+>>>>>>> fdf8d7c5a1a289e8566c91d54e243aadd052a986
         else:
             return
                 
-                
+     
+     
+
 
     def onAbbrechen(self):    # Exit button - remove ALL lockfiles
+        print "Beende alle Prozesse"
         for i in self.proposed:
             try:
                 os.remove("%s.lock" % i) 
             except:
                 pass
+            
+        command = "sudo pkill -f getflashdrive &"
+        os.system(command)  
+        command = "sudo pkill -f rsync && sudo killall rsync"
+        os.system(command) 
         self.ui.close()
+        sys.exit(0)
 
 
+class  Worker(QtCore.QObject):
+    def __init__(self, meindialog):
+        super(Worker, self).__init__()
+        self.meindialog = meindialog
+    
+    processed = QtCore.pyqtSignal(int,QtWidgets.QListWidgetItem,str)
+    finished = QtCore.pyqtSignal()
+    
+    def doCopy(self):
+        if self.meindialog.ui.copydata.checkState():
+            copydata = True
+        else:
+            copydata = False
+        
+        if self.meindialog.ui.update.checkState():
+            update = True
+        else:
+            update = False
+        
+        
+        
+        
+        items = self.meindialog.get_list_widget_items()
+        for item in items:
+            
+            self.processed.emit(0,item,'LOCK') #lock UI on process start
+            
+            iteminfo = item.info.text().replace("(","").replace(")","").replace("  "," ").replace("   ","").replace(" ","-")    #get rid of spaces an special chars in order to pass it as parameter - i know there is a better way ;-)
+            method = "copy"
+            
+            completed = float(0)
+            if update is True:   #less steps
+                increment = float(2.5)
+            else:
+                increment = float(1.5)
+                
+         
+            p=Popen(["./getflashdrive.sh",str(method),str(item.sharesize), str(copydata), str(item.id), str(iteminfo), str(update)],stdout=PIPE, stderr=STDOUT, bufsize=1, shell=False)
+            
+            with p.stdout:
+                for line in iter(p.stdout.readline, b''):
+                    line = line.strip('\n')
+                    print line
+                    
+                    if "0%" not in line:    # rsync delivers 200 entries with 0% sometimes - do not increment
+                        completed += increment
+                    
+                    if "FILENUMBER" in line:   #keyword FILENUMBER liefert anzahl an files für rsync
+                        number=line.split(",")
+                        number=float(number[1])
+                        increment = float(84/number)
+                        completed += 1  #ganzer schritt notwendig um textupdate zu erzwingen
+                    elif "CASPER" in line:   #keyword CASPER liefert anzahl an files für rsync
+                        number=line.split(",")
+                        number=float(number[1])
+                        item.progressbar.setValue(18)
+                        increment = float(80/number)
+                        completed += 1
+                        
+                    
+                    if "size" in line:  #rsync is finished - advance 1 step
+                        increment = float(1)   # progressbar geht nur weiter beim überschreiten ganzer zahlen - setze wieder auf 1 sonst werden letze einträge nicht visualisiert
+                        completed += 1
+                       
+                    if "FAILED" in line or "error" in line or "failed" in line:
+                        completed = 100
+                        line = "Kopiervorgang fehlgeschlagen"
+                        print line
+                        self.processed.emit(completed,item,line) 
+                        p.kill()
+                        break
+                        
+                       
+                    elif "END" in line:
+                        completed = 100
+                        line = "Kopiervorgang abgeschlossen"
+                       
+                    self.processed.emit(completed,item,line)  #update progressbar over signal DO NOT directly acces UI elements from separate thread
+                    
+            p.wait()
+          
+            
+        self.finished.emit()   
+     
+    
 
 
 app = QtWidgets.QApplication(sys.argv)
