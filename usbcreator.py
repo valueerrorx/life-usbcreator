@@ -34,20 +34,24 @@ class MeinDialog(QtWidgets.QDialog):
         
     def  updateProgress(self,value,item,line):
         
+        if "abgeschlossen" in line:
+            item.comboBox.setEnabled(True)
+        elif "fehlgeschlagen" in line:
+            pixmap = QPixmap('pixmaps/driveno.png')
+            pixmap = pixmap.scaled(QtCore.QSize(64,64))
+            item.picture.setPixmap(pixmap)
+            #make sure this process quits immediately
+            print "killing running subprocesses"
+            command = "sudo pkill -f rsync && sudo killall rsync"
+            os.system(command) 
+            
+  
+        
         if "LOCK" in line:
             self.ui.listWidget.scrollToItem(item,QtWidgets.QAbstractItemView.PositionAtTop)
-            self.ui.copy.setEnabled(False)
-            #self.ui.exit.setEnabled(False)
-            self.ui.copydata.setEnabled(False)
-            self.ui.update.setEnabled(False)
-            item.comboBox.setEnabled(False)
         else:
             item.progressbar.setValue(int(value))
             item.warn.setText(line)
-
-        if "Kopiervorgang" in line:
-            item.comboBox.setEnabled(True)
-        
         
         
     
@@ -67,12 +71,14 @@ class MeinDialog(QtWidgets.QDialog):
         self.ui.exit.setEnabled(True)
         self.ui.copydata.setEnabled(True)
         self.ui.update.setEnabled(True)
-        # self.extraThread.deleteLater()
-        # self.worker.deleteLater()
+        
        
        
     def searchUSB(self):
         self.devices = []
+        #make sure nothing is running anymore
+        self.extraThread.quit()
+        self.extraThread.wait()
         
         #build devices list
         for dev in self.proposed:
@@ -83,13 +89,10 @@ class MeinDialog(QtWidgets.QDialog):
         else: 
             self.ui.copy.setEnabled(False)
         
-        
         #delete all widgets
         items = self.get_list_widget_items()
         for item in items:
             sip.delete(item)
-        
-        
         
         #build size information for every device
         for deviceentry in self.devices:
@@ -99,7 +102,6 @@ class MeinDialog(QtWidgets.QDialog):
             devicesize = deviceentry[3]
             usbbytesize = deviceentry[4]
             self.createWidget(usbdev, device_info, devicemodel, usbbytesize)
-        
         
         # do not allow copy if any of the flashdrives is too small
         items = self.get_list_widget_items()  
@@ -304,6 +306,12 @@ class MeinDialog(QtWidgets.QDialog):
     def startCopy(self):
         items = self.get_list_widget_items()
         if items:
+            for item in items:
+                item.comboBox.setEnabled(False)
+            self.ui.copy.setEnabled(False)
+            self.ui.copydata.setEnabled(False)
+            self.ui.update.setEnabled(False)   
+            
             self.extraThread.start()
         else:
             return
@@ -320,10 +328,12 @@ class MeinDialog(QtWidgets.QDialog):
             except:
                 pass
             
-        command = "pkill -f getflashdrive &"
+        command = "sudo pkill -f getflashdrive &"
         os.system(command)  
+        command = "sudo pkill -f rsync && sudo killall rsync"
+        os.system(command) 
         self.ui.close()
-
+        sys.exit(0)
 
 
 class  Worker(QtCore.QObject):
@@ -360,9 +370,11 @@ class  Worker(QtCore.QObject):
             if update is True:   #less steps
                 increment = float(2.5)
             else:
-                increment = float(1.0)
-        
-            p=Popen(['./getflashdrive.sh',str(method),str(item.sharesize), str(copydata), str(item.id), str(iteminfo), str(update)],stdout=PIPE, stderr=STDOUT, bufsize=1)
+                increment = float(1.5)
+                
+         
+            p=Popen(["./getflashdrive.sh",str(method),str(item.sharesize), str(copydata), str(item.id), str(iteminfo), str(update)],stdout=PIPE, stderr=STDOUT, bufsize=1, shell=False)
+            
             with p.stdout:
                 for line in iter(p.stdout.readline, b''):
                     line = line.strip('\n')
@@ -388,9 +400,15 @@ class  Worker(QtCore.QObject):
                         increment = float(1)   # progressbar geht nur weiter beim überschreiten ganzer zahlen - setze wieder auf 1 sonst werden letze einträge nicht visualisiert
                         completed += 1
                        
-                    if "FAILED" in line:
+                    if "FAILED" in line or "error" in line or "failed" in line:
                         completed = 100
                         line = "Kopiervorgang fehlgeschlagen"
+                        print line
+                        self.processed.emit(completed,item,line) 
+                        p.kill()
+                        break
+                        
+                       
                     elif "END" in line:
                         completed = 100
                         line = "Kopiervorgang abgeschlossen"
