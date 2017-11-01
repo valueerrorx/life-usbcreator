@@ -168,7 +168,6 @@ class MeinDialog(QtWidgets.QDialog):
         answer = Popen(["./getflashdrive.sh","check", dev ], stdout=PIPE)
         answer = str(answer.communicate()[0])  # das shellscript antwortet immer mit dem namen der datei die die informationen beinhaltet
         answerlist= answer.split(';')    #  "0 $USB; 1 $DEVICEVENDOR; 2 $DEVICEMODEL; 3 $DEVICESIZE; 4 $USBBYTESIZE"
-        
         print answerlist
         
         usbdev = answerlist[0]    #erster teil ist usb gerät
@@ -276,6 +275,8 @@ class MeinDialog(QtWidgets.QDialog):
                 #progressbar.setGeometry(200,80,250,20)
                 self.ui.copy.setEnabled(False)
                 self.ui.exit.setEnabled(False)
+                time.sleep(1)
+                
                 completed = float(0)
                 if update is True:   #less steps
                     increment = float(2.5)
