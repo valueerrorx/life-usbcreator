@@ -224,17 +224,18 @@ then
         sudo partprobe  > /dev/null 2>&1  #hide output
 
         #  teste ob paritionierung erfolgreich war
-        
-        #ISLIVE=$(ls -l /dev/disk/by-label/ |grep ${USB} |grep LIFE|awk '{print $9;}') 
-        ISLIVE=$(sudo mlabel -si /dev/${USB}2 |awk '{print $4}') 
-        
-        
+        checkpart
+    }
+
+    
+    
+    checkpart(){
         ##############9
         echo "Prüfe Partitionen" 
         sleep 0.5
         ##############
-        
-
+    
+        ISLIVE=$(sudo mlabel -si /dev/${USB}2 |awk '{print $4}') 
         if [[ ( "$ISLIVE" = "LIFECLIENT" ) ]];   #check if string not empty or null  (if life usb is found this ISLIVE returns a line
         then
             ##############10
@@ -243,20 +244,23 @@ then
             ##############
             
         else
-            check
-            ##############10
-            echo "USB Kopie abgebrochen" 
-            sleep 0.5
-            ##############
-            exec kdialog  --caption "LIFE"  --title "LIFE" --msgbox "USB Gerät: $TITLE \n\nProblem bei der Partitionierung.\nUSB Stick Kopie fehlgeschlagen!\n\n"  > /dev/null 2>&1 & 
-            exit 0
+            kdialog --yesno "USB Gerät: $TITLE \n\nProblem bei der Partitionierung.\nPartitionierung wiederholen?" --title 'Partitionierung' --caption "Partitionierung"
+            if [ "$?" != 0 ]; then    #abbrechen
+                check
+                ##############10
+                echo "USB Kopie abgebrochen" 
+                sleep 0.5
+                echo "END" 
+                ##############
+                exit 0
+            else
+                partitiondevice
+            fi;
         fi
-        
     }
+    
+    
 
-    
-    
-    
     ## IF update -  no partitioning  - check partitions and sync system 
     
     if [[( $UPDATE = "True"  )]]
