@@ -19,12 +19,58 @@ class MeinDialog(QtWidgets.QDialog):
         self.ui.copy.clicked.connect(self.startCopy)
         self.proposed = ["sda","sdb","sdc","sdd","sde","sdf","sdg","sdh","sdi","sdj","sdk","sdl","sdm","sdn","sdo","sdp","sdq","sdr","sds","sdt","sdu","sdv","sdw","sdx","sdy","sdz"]
         
+        QtWidgets.QApplication.instance().aboutToQuit.connect(self.quit)
+        
         self.extraThread = QtCore.QThread()
         self.worker = Worker(self)
         self.worker.moveToThread(self.extraThread)
         self.extraThread.started.connect(self.worker.doCopy)
+        self.extraThread.finished.connect(self.finished)
+        
+        self.worker.processed.connect(self.updateProgress)
+        self.worker.finished.connect(self.finished)
         
         
+        
+    def  updateProgress(self,value,item,line):
+        
+        if "LOCK" in line:
+            self.ui.listWidget.scrollToItem(item,QtWidgets.QAbstractItemView.PositionAtTop)
+            self.ui.copy.setEnabled(False)
+            #self.ui.exit.setEnabled(False)
+            self.ui.copydata.setEnabled(False)
+            self.ui.update.setEnabled(False)
+            item.comboBox.setEnabled(False)
+        else:
+            item.progressbar.setValue(int(value))
+            item.warn.setText(line)
+
+        if "Kopiervorgang" in line:
+            item.comboBox.setEnabled(True)
+        
+        
+        
+    
+    def  quit(self):
+        # Quit the thread's event loop. Note that this *doesn't* stop tasks
+        # running in the thread, it just stops the thread from dispatching
+        # events.
+        self.extraThread.quit()
+        # Wait for the thread to complete. If the thread's task is not done,
+        # this will block.
+        self.extraThread.wait()
+       
+       
+    def  finished(self):
+        print  'finished'
+        self.ui.copy.setEnabled(True)
+        self.ui.exit.setEnabled(True)
+        self.ui.copydata.setEnabled(True)
+        self.ui.update.setEnabled(True)
+        # self.extraThread.deleteLater()
+        # self.worker.deleteLater()
+       
+       
     def searchUSB(self):
         self.devices = []
         
@@ -267,11 +313,15 @@ class MeinDialog(QtWidgets.QDialog):
 
 
     def onAbbrechen(self):    # Exit button - remove ALL lockfiles
+        print "Beende alle Prozesse"
         for i in self.proposed:
             try:
                 os.remove("%s.lock" % i) 
             except:
                 pass
+            
+        command = "pkill -f getflashdrive &"
+        os.system(command)  
         self.ui.close()
 
 
@@ -280,8 +330,9 @@ class  Worker(QtCore.QObject):
     def __init__(self, meindialog):
         super(Worker, self).__init__()
         self.meindialog = meindialog
-    #processed = QtCore.Signal(int)
-    #finished = QtCore.Signal()
+    
+    processed = QtCore.pyqtSignal(int,QtWidgets.QListWidgetItem,str)
+    finished = QtCore.pyqtSignal()
     
     def doCopy(self):
         if self.meindialog.ui.copydata.checkState():
@@ -296,17 +347,14 @@ class  Worker(QtCore.QObject):
         
         
         
+        
         items = self.meindialog.get_list_widget_items()
         for item in items:
-            self.meindialog.ui.listWidget.scrollToItem(item,QtWidgets.QAbstractItemView.PositionAtTop)
-            #get rid of spaces an special chars in order to pass it as parameter - i know there is a better way ;-)
-            iteminfo = item.info.text().replace("(","").replace(")","").replace("  "," ").replace("   ","").replace(" ","-")
+            
+            self.processed.emit(0,item,'LOCK') #lock UI on process start
+            
+            iteminfo = item.info.text().replace("(","").replace(")","").replace("  "," ").replace("   ","").replace(" ","-")    #get rid of spaces an special chars in order to pass it as parameter - i know there is a better way ;-)
             method = "copy"
-            #progressbar= Qtwidgets.QProgressBar(self)
-            #progressbar.setGeometry(200,80,250,20)
-            self.meindialog.ui.copy.setEnabled(False)
-            self.meindialog.ui.exit.setEnabled(False)
-            time.sleep(1)
             
             completed = float(0)
             if update is True:   #less steps
@@ -318,42 +366,42 @@ class  Worker(QtCore.QObject):
             with p.stdout:
                 for line in iter(p.stdout.readline, b''):
                     line = line.strip('\n')
-                    item.warn.setText(line)
                     print line
                     
                     if "0%" not in line:    # rsync delivers 200 entries with 0% sometimes - do not increment
                         completed += increment
                     
-                    item.progressbar.setValue(completed)
-                    
                     if "FILENUMBER" in line:   #keyword FILENUMBER liefert anzahl an files für rsync
                         number=line.split(",")
                         number=float(number[1])
                         increment = float(84/number)
-                        item.progressbar.setValue(item.progressbar.value()+1) #aus irgendeinem grund wird setText nur dann durchgeführt wenn progressbar updated
-                        
+                        completed += 1  #ganzer schritt notwendig um textupdate zu erzwingen
                     elif "CASPER" in line:   #keyword CASPER liefert anzahl an files für rsync
                         number=line.split(",")
                         number=float(number[1])
                         item.progressbar.setValue(18)
                         increment = float(80/number)
-                        item.progressbar.setValue(item.progressbar.value()+1)
+                        completed += 1
+                        
                     
                     if "size" in line:  #rsync is finished - advance 1 step
                         increment = float(1)   # progressbar geht nur weiter beim überschreiten ganzer zahlen - setze wieder auf 1 sonst werden letze einträge nicht visualisiert
-                        item.progressbar.setValue(item.progressbar.value()+1)
+                        completed += 1
+                       
                     if "FAILED" in line:
-                        item.progressbar.setValue(100)
-                        item.warn.setText("Kopiervorgang fehlgeschlagen")
+                        completed = 100
+                        line = "Kopiervorgang fehlgeschlagen"
                     elif "END" in line:
-                        item.progressbar.setValue(100)
-                        item.warn.setText("Kopiervorgang abgeschlossen")
+                        completed = 100
+                        line = "Kopiervorgang abgeschlossen"
+                       
+                    self.processed.emit(completed,item,line)  #update progressbar over signal DO NOT directly acces UI elements from separate thread
+                    
             p.wait()
+          
             
-        #self.finished.emit()   
-        self.meindialog.ui.copy.setEnabled(True)
-        self.meindialog.ui.exit.setEnabled(True)
-    
+        self.finished.emit()   
+     
     
 
 

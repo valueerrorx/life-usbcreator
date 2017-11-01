@@ -245,9 +245,16 @@ then
             ##############
             
         else
-            if [[( $PCOUNT = "0"  )]]
+            if [[( $PCOUNT = "0"  )]]   # try a second time before failing
             then
                 PCOUNT="1"
+                ##############10
+                echo "Partitionierung fehlerhaft" 
+                sleep 1
+                echo "Starte Partitionierung erneut"
+                sleep 1
+                ##############
+                
                 partitiondevice
             else
                 check
