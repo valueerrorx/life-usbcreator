@@ -307,74 +307,14 @@ class MeinDialog(QtWidgets.QDialog):
         items = self.get_list_widget_items()
         if items:
             for item in items:
-<<<<<<< HEAD
-                    
-                self.ui.listWidget.scrollToItem(item,QtWidgets.QAbstractItemView.PositionAtTop)
-                #get rid of spaces an special chars in order to pass it as parameter - i know there is a better way ;-)
-                iteminfo = item.info.text().replace("(","").replace(")","").replace("  "," ").replace("   ","").replace(" ","-")
-                method = "copy"
-                #progressbar= Qtwidgets.QProgressBar(self)
-                #progressbar.setGeometry(200,80,250,20)
-                self.ui.copy.setEnabled(False)
-                self.ui.exit.setEnabled(False)
-                time.sleep(1)
-                
-                completed = float(0)
-                if update is True:   #less steps
-                    increment = float(2.5)
-                else:
-                    increment = float(1.0)
-                    
-                # ca 16 schritte im getflashdrive script + anzahl an files von rsync
-                # 84 schritte übrig (copy casper setzt progress nochmal auf 20 der einfachheit halber)
-                
-                p=Popen(['./getflashdrive.sh',str(method),str(item.sharesize), str(copydata), str(item.id), str(iteminfo), str(update)],stdout=PIPE, stderr=STDOUT, bufsize=1)
-                with p.stdout:
-                    for line in iter(p.stdout.readline, b''):
-                        line = line.strip('\n')
-                        item.warn.setText(line)
-                        print line
-                        
-                        if "0%" not in line:    # rsync delivers 200 entries with 0% sometimes - do not increment
-                            completed += increment
-                        
-                        item.progressbar.setValue(completed)
-                        
-                        if "FILENUMBER" in line:   #keyword FILENUMBER liefert anzahl an files für rsync
-                            number=line.split(",")
-                            number=float(number[1])
-                            increment = float(84/number)
-                            item.progressbar.setValue(item.progressbar.value()+1) #aus irgendeinem grund wird setText nur dann durchgeführt wenn progressbar updated
-                            
-                        elif "CASPER" in line:   #keyword CASPER liefert anzahl an files für rsync
-                            number=line.split(",")
-                            number=float(number[1])
-                            item.progressbar.setValue(18)
-                            increment = float(80/number)
-                            item.progressbar.setValue(item.progressbar.value()+1)
-                        
-                        if "size" in line:  #rsync is finished - advance 1 step
-                            increment = float(1)   # progressbar geht nur weiter beim überschreiten ganzer zahlen - setze wieder auf 1 sonst werden letze einträge nicht visualisiert
-                            item.progressbar.setValue(item.progressbar.value()+1)
-                        
-                        elif "END" in line:
-                            item.progressbar.setValue(100)
-                            item.warn.setText("Kopiervorgang abgeschlossen")
-                            
-                        
-                            
-                p.wait()
-   
-            self.ui.copy.setEnabled(True)
-            self.ui.exit.setEnabled(True)
-=======
                 item.comboBox.setEnabled(False)
+                
             self.ui.copy.setEnabled(False)
             self.ui.copydata.setEnabled(False)
             self.ui.update.setEnabled(False)   
             
             self.extraThread.start()
->>>>>>> fdf8d7c5a1a289e8566c91d54e243aadd052a986
+
         else:
             return
                 
@@ -432,7 +372,7 @@ class  Worker(QtCore.QObject):
             if update is True:   #less steps
                 increment = float(2.5)
             else:
-                increment = float(1.5)
+                increment = float(1.3)
                 
          
             p=Popen(["./getflashdrive.sh",str(method),str(item.sharesize), str(copydata), str(item.id), str(iteminfo), str(update)],stdout=PIPE, stderr=STDOUT, bufsize=1, shell=False)
