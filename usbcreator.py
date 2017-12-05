@@ -80,6 +80,7 @@ class MeinDialog(QtWidgets.QDialog):
         #make sure nothing is running anymore
         self.extraThread.quit()
         self.extraThread.wait()
+        self.ui.deviceinfo.setText("Gefundene USB Speichersticks:") #reset deviceinfolabel
         
         #build devices list
         for dev in self.proposed:
@@ -217,6 +218,7 @@ class MeinDialog(QtWidgets.QDialog):
         """this function builds a list 
         of all found and confirmed usb devices 
         """
+        
         answer = Popen(["./getflashdrive.sh","check", dev ], stdout=PIPE)
         answer = str(answer.communicate()[0])  # das shellscript antwortet immer mit dem namen der datei die die informationen beinhaltet
         answerlist= answer.split(';')    #  "0 $USB; 1 $DEVICEVENDOR; 2 $DEVICEMODEL; 3 $DEVICESIZE; 4 $USBBYTESIZE"
@@ -232,8 +234,10 @@ class MeinDialog(QtWidgets.QDialog):
             
         if device_info == "NOUSB" or device_info == "SYSUSB" or device_info == "NOLIVE" or device_info == "LOCKED":
             # be more verbose if there is no usb found at all or if the only drive found is the sysusb  - we could iterate over a separate list of all devices later
-            if device_info == "NOLIFE":
-                self.ui.infolabel.setText("Dies ist kein live usb System!")
+            if device_info == "NOLIVE":
+                self.ui.deviceinfo.setText("<b>Dies ist kein live usb System!</b>")
+            if device_info == "SYSUSB":
+                self.ui.deviceinfo.setText("<b>Es wurde nur der Systemdatenträger gefunden!</b>")
            
             return  # we do not use those devices
         else:
