@@ -111,13 +111,24 @@
           </font>
          </property>
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitte überprüfen Sie ob alle Sticks richtig erkannt wurden.&lt;/p&gt;&lt;p&gt;Wählen sie die Größe der Austauschpartition &amp;quot;Share&amp;quot;&lt;br/&gt;für den jeweiligen Stick.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitte überprüfen Sie ob alle Sticks richtig erkannt wurden.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
          </property>
          <property name="wordWrap">
           <bool>true</bool>
+         </property>
+         <property name="indent">
+          <number>1</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Wählen sie die Größe der Austauschpartition &quot;Share&quot;
+für den jeweiligen Stick.</string>
          </property>
          <property name="indent">
           <number>1</number>

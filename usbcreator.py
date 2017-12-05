@@ -232,6 +232,9 @@ class MeinDialog(QtWidgets.QDialog):
             
         if device_info == "NOUSB" or device_info == "SYSUSB" or device_info == "NOLIVE" or device_info == "LOCKED":
             # be more verbose if there is no usb found at all or if the only drive found is the sysusb  - we could iterate over a separate list of all devices later
+            if device_info == "NOLIFE":
+                self.ui.infolabel.setText("Dies ist kein live usb System!")
+           
             return  # we do not use those devices
         else:
             devlist = []   #rebuild list of found devices and check if a device is already in it
