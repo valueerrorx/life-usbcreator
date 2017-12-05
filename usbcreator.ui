@@ -277,7 +277,7 @@
           <item>
            <widget class="QPushButton" name="exit">
             <property name="text">
-             <string>Abbrechen</string>
+             <string>Beenden</string>
             </property>
            </widget>
           </item>

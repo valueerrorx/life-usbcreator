@@ -71,6 +71,7 @@ class MeinDialog(QtWidgets.QDialog):
         self.ui.exit.setEnabled(True)
         self.ui.copydata.setEnabled(True)
         self.ui.update.setEnabled(True)
+        self.ui.search.setEnabled(True)
         
        
        
@@ -311,7 +312,8 @@ class MeinDialog(QtWidgets.QDialog):
                 
             self.ui.copy.setEnabled(False)
             self.ui.copydata.setEnabled(False)
-            self.ui.update.setEnabled(False)   
+            self.ui.update.setEnabled(False) 
+            self.ui.search.setEnabled(False) 
             
             self.extraThread.start()
 
