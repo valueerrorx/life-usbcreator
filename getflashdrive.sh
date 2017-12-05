@@ -65,7 +65,9 @@ then
         fi
         SYSMOUNT1=$(findmnt -nr -o target -S /dev/${USB}1)          #on the masterflashdrive (created from life.iso) this would be the systempartition
         SYSMOUNT2=$(findmnt -nr -o target -S /dev/${USB}2)          #on the final life flashdrive (created from this script) this would be the systempartition
-        if [[( $SYSMOUNT1 = '/cdrom' ) ||( $SYSMOUNT2 = '/cdrom' ) ]]                  ## check if this is the system device - check mountpoint!!
+        SYSMOUNT3=$(findmnt -nr -o target -S /dev/${USB})           #etcher creates a live usb device with no partition number
+        
+        if [[( $SYSMOUNT1 = '/cdrom' ) ||( $SYSMOUNT2 = '/cdrom' ) ||( $SYSMOUNT3 = '/cdrom' ) ]]                  ## check if this is the system device - check mountpoint!!
         then
             touch ${DIR}/${USB}.lock 
             printf "$USB;SYSUSB"    # der gefundene stick ist das systemdevice
