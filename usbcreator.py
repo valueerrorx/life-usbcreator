@@ -29,7 +29,7 @@ class MeinDialog(QtWidgets.QDialog):
         
         self.worker.processed.connect(self.updateProgress)
         self.worker.finished.connect(self.finished)
-        
+        self.searchinfo = ""
         
         
     def  updateProgress(self,value,item,line):
@@ -88,8 +88,17 @@ class MeinDialog(QtWidgets.QDialog):
         
         if len(self.devices) > 0:
             self.ui.copy.setEnabled(True)
+            self.ui.deviceinfo.setText("<b>Gefundene USB Speichersticks:</b>")
         else: 
             self.ui.copy.setEnabled(False)
+            if self.searchinfo == "SYSUSB":
+                self.ui.deviceinfo.setText("<b>Es wurde nur der Systemdatenträger gefunden!</b>")
+            elif self.searchinfo == "NOLIVE":
+                self.ui.deviceinfo.setText("<b>USB Kopie von installierten Systemen nicht unterstützt!</b>")
+            elif self.searchinfo == "LOCKED":
+                self.ui.deviceinfo.setText("<b>Der gefundene USB Datenträger ist gesperrt!</b>")
+            else:
+                self.ui.deviceinfo.setText("<b>Es wurde kein USB Datenträger gefunden!</b>")
         
         #delete all widgets
         items = self.get_list_widget_items()
@@ -231,14 +240,16 @@ class MeinDialog(QtWidgets.QDialog):
             devicesize = answerlist[3]
             usbbytesize = answerlist[4]
         except: IndexError
-            
+        
         if device_info == "NOUSB" or device_info == "SYSUSB" or device_info == "NOLIVE" or device_info == "LOCKED":
             # be more verbose if there is no usb found at all or if the only drive found is the sysusb  - we could iterate over a separate list of all devices later
             if device_info == "NOLIVE":
-                self.ui.deviceinfo.setText("<b>Dies ist kein live usb System!</b>")
-            if device_info == "SYSUSB":
-                self.ui.deviceinfo.setText("<b>Es wurde nur der Systemdatenträger gefunden!</b>")
-           
+                self.searchinfo = "NOLIVE"
+            elif device_info == "SYSUSB":
+               self.searchinfo = "SYSUSB"
+            elif device_info == "LOCKED":
+               self.searchinfo = "LOCKED"
+          
             return  # we do not use those devices
         else:
             devlist = []   #rebuild list of found devices and check if a device is already in it
@@ -250,7 +261,7 @@ class MeinDialog(QtWidgets.QDialog):
             else:
                 # erstelle eine umfassende liste mit geräteinformationen
                 self.devices.append([usbdev, device_info, devicemodel, devicesize, usbbytesize])
-                
+
         return 
  
     

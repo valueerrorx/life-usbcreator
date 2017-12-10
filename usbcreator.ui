@@ -147,7 +147,7 @@ für den jeweiligen Stick.</string>
              <string notr="true">background-color:rgba(100,200,100,0.5);</string>
             </property>
             <property name="text">
-             <string>USB Stick Liste aktualisieren</string>
+             <string>USB Speichersticks suchen</string>
             </property>
            </widget>
           </item>
