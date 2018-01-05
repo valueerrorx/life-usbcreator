@@ -155,7 +155,7 @@ then
     TITLE=${TITLE//[-]/ }
     SDX="/dev/$USB" 
     
-    
+    #UPDATE="True"   skip formatting
     
     #---------------------------------------------------------#"
     #     start partitioning usb device                       #"
@@ -383,7 +383,7 @@ then
     echo "Kopiere Systemdateien" 
     sleep 0.5
     ##############
-    rsync -a -h --info=progress2,stats --no-inc-recursive /cdrom/ $MOUNTPOINT | stdbuf -oL tr '\r' '\n' | stdbuf -oL tr -s " " | stdbuf -oL cut -d " " -f 2-4
+    sudo rsync -a -h --info=progress2,stats --no-inc-recursive /cdrom/ $MOUNTPOINT | stdbuf -oL tr '\r' '\n' | stdbuf -oL tr -s " " | stdbuf -oL cut -d " " -f 2-4
     
 
     

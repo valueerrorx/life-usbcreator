@@ -9,14 +9,14 @@ import subprocess, sip, time
 
 USER = subprocess.check_output("logname", shell=True).rstrip()
 USER_HOME_DIR = os.path.join("/home", str(USER))
-
+WORK_DIRECTORY = os.path.join(USER_HOME_DIR, ".life/applications/life-usbcreator")
 
 
 class MeinDialog(QtWidgets.QDialog):
     def __init__(self):
         QtWidgets.QDialog.__init__(self)
-        self.ui = uic.loadUi("usbcreator.ui")        # load UI
-        self.ui.setWindowIcon(QIcon("pixmaps/drive.png"))
+        self.ui = uic.loadUi(os.path.join(WORK_DIRECTORY, "usbcreator.ui"))        # load UI
+        self.ui.setWindowIcon(QIcon(os.path.join(WORK_DIRECTORY, "pixmaps/drive.png")))
         self.ui.search.clicked.connect(self.searchUSB)     
         self.ui.exit.clicked.connect(self.onAbbrechen)        # setup Slots
         self.ui.copy.clicked.connect(self.startCopy)
@@ -78,7 +78,7 @@ class MeinDialog(QtWidgets.QDialog):
         if "abgeschlossen" in line:
             item.comboBox.setEnabled(True)
         elif "fehlgeschlagen" in line:
-            pixmap = QPixmap('pixmaps/driveno.png')
+            pixmap = QPixmap(os.path.join(WORK_DIRECTORY, "pixmaps/driveno.png"))
             pixmap = pixmap.scaled(QtCore.QSize(64,64))
             item.picture.setPixmap(pixmap)
             #make sure this process quits immediately
@@ -190,7 +190,7 @@ class MeinDialog(QtWidgets.QDialog):
         item.size = usbbytesize
         item.sharesize = 2000
 
-        pixmap = QPixmap('pixmaps/drive.png')
+        pixmap = QPixmap(os.path.join(WORK_DIRECTORY, "pixmaps/drive.png"))
         pixmap = pixmap.scaled(QtCore.QSize(64,64))
         item.picture = QtWidgets.QLabel()
         item.picture.setPixmap(pixmap)
@@ -264,9 +264,9 @@ class MeinDialog(QtWidgets.QDialog):
         else:
             copylife = "True"
         
+        getcommand=os.path.join(WORK_DIRECTORY, "getflashdrive.sh")
         
-        
-        answer = Popen(["./getflashdrive.sh","check", dev, copylife ], stdout=PIPE)
+        answer = Popen([getcommand,"check", dev, copylife ], stdout=PIPE)
         answer = str(answer.communicate()[0])  # das shellscript antwortet immer mit dem namen der datei die die informationen beinhaltet
         answerlist= answer.split(';')    #  "0 $USB; 1 $DEVICEVENDOR; 2 $DEVICEMODEL; 3 $DEVICESIZE; 4 $USBBYTESIZE"
         print answerlist
@@ -311,7 +311,7 @@ class MeinDialog(QtWidgets.QDialog):
         
         if devicesize-6000-sharesize > 0:   #4GB for the system 2GB  casper-rw + SHARE
             print "device size ok"
-            pixmap = QPixmap('pixmaps/driveyes.png')
+            pixmap = QPixmap(os.path.join(WORK_DIRECTORY, "pixmaps/driveyes.png"))
             pixmap = pixmap.scaled(QtCore.QSize(64,64))
             item.picture.setPixmap(pixmap)
             item.sharesize = sharesize
@@ -322,7 +322,7 @@ class MeinDialog(QtWidgets.QDialog):
             print "device to small %s" % item.id
             
             item.warn.setText("<b>Zu wenig Speicherplatz</b>")
-            pixmap = QPixmap('pixmaps/driveno.png')
+            pixmap = QPixmap(os.path.join(WORK_DIRECTORY, "pixmaps/driveno.png"))
             pixmap = pixmap.scaled(QtCore.QSize(64,64))
             item.picture.setPixmap(pixmap)
             item.sharesize = 0
@@ -450,8 +450,10 @@ class  Worker(QtCore.QObject):
             else:
                 increment = float(1.3)
                 
+            getcommand=os.path.join(WORK_DIRECTORY, "getflashdrive.sh")
          
-            p=Popen(["./getflashdrive.sh",str(method),str(item.sharesize), str(copydata), str(item.id), str(iteminfo), str(update), str(self.meindialog.isolocation)],stdout=PIPE, stderr=STDOUT, bufsize=1, shell=False)
+         
+            p=Popen([getcommand,str(method),str(item.sharesize), str(copydata), str(item.id), str(iteminfo), str(update), str(self.meindialog.isolocation)],stdout=PIPE, stderr=STDOUT, bufsize=1, shell=False)
             
             with p.stdout:
                 for line in iter(p.stdout.readline, b''):
