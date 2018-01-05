@@ -106,7 +106,7 @@ class MeinDialog(QtWidgets.QDialog):
        
     def  finished(self):
         print  'finished'
-        self.ui.copy.setEnabled(True)
+        #self.ui.copy.setEnabled(True)
         self.ui.exit.setEnabled(True)
         self.ui.copydata.setEnabled(True)
         self.ui.update.setEnabled(True)
