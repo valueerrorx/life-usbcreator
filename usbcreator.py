@@ -7,6 +7,9 @@ from subprocess import Popen, PIPE, STDOUT
 import subprocess, sip, time
 
 
+USER = subprocess.check_output("logname", shell=True).rstrip()
+USER_HOME_DIR = os.path.join("/home", str(USER))
+
 
 
 class MeinDialog(QtWidgets.QDialog):
@@ -17,6 +20,8 @@ class MeinDialog(QtWidgets.QDialog):
         self.ui.search.clicked.connect(self.searchUSB)     
         self.ui.exit.clicked.connect(self.onAbbrechen)        # setup Slots
         self.ui.copy.clicked.connect(self.startCopy)
+        self.ui.selectiso.clicked.connect(self.selectFile)
+        self.ui.usbusb.clicked.connect(self.searchUSB)
         self.proposed = ["sda","sdb","sdc","sdd","sde","sdf","sdg","sdh","sdi","sdj","sdk","sdl","sdm","sdn","sdo","sdp","sdq","sdr","sds","sdt","sdu","sdv","sdw","sdx","sdy","sdz"]
         
         QtWidgets.QApplication.instance().aboutToQuit.connect(self.quit)
@@ -30,10 +35,46 @@ class MeinDialog(QtWidgets.QDialog):
         self.worker.processed.connect(self.updateProgress)
         self.worker.finished.connect(self.finished)
         self.searchinfo = ""
+        self.isolocation = ""
         
+        if len(sys.argv) > 1:
+            print(sys.argv[1])
+            self.isolocation = sys.argv[1]
+        
+        if self.isolocation != "":
+            if os.path.isfile(self.isolocation):   #check if the filenpath given via commandline is a valid file 
+                self.ui.copydata.setEnabled(False)
+                self.ui.update.setEnabled(False)
+                self.ui.isousb.setChecked(True)
+                filename = self.isolocation.rsplit('/', 1)
+                self.ui.isofilename.setText("<b>%s</b>" % filename[1])
+            else:
+                print("isolocation was given but file not found")
+                
+                
+    
+    
+    def selectFile(self):
+        
+        self.lines = []
+        
+        filedialog = QtWidgets.QFileDialog()
+        filedialog.setDirectory(USER_HOME_DIR)  # set default directory
+        #filedialog.selectNameFilter("Text Files (*.txt)")
+        
+        file_path = filedialog.getOpenFileName(self,"Bitte wählen sie eine Datei", "","ISO Images (*.iso)")  # parent, caption, directory, filter
+        file_path = file_path[0]
+       
+        if os.path.isfile(file_path):
+            filename = file_path.rsplit('/', 1)
+            self.ui.isofilename.setText("<b>%s</b>" % filename[1])
+            self.isolocation = file_path
+            
+        return
+            
+            
         
     def  updateProgress(self,value,item,line):
-        
         if "abgeschlossen" in line:
             item.comboBox.setEnabled(True)
         elif "fehlgeschlagen" in line:
@@ -44,9 +85,7 @@ class MeinDialog(QtWidgets.QDialog):
             print "killing running subprocesses"
             command = "sudo pkill -f rsync && sudo killall rsync"
             os.system(command) 
-            
-  
-        
+                    
         if "LOCK" in line:
             self.ui.listWidget.scrollToItem(item,QtWidgets.QAbstractItemView.PositionAtTop)
         else:
@@ -80,7 +119,7 @@ class MeinDialog(QtWidgets.QDialog):
         #make sure nothing is running anymore
         self.extraThread.quit()
         self.extraThread.wait()
-        self.ui.deviceinfo.setText("Gefundene USB Speichersticks:") #reset deviceinfolabel
+        self.ui.deviceinfo.setText("USB Speichersticks gefunden") #reset deviceinfolabel
         
         #build devices list
         for dev in self.proposed:
@@ -88,13 +127,13 @@ class MeinDialog(QtWidgets.QDialog):
         
         if len(self.devices) > 0:
             self.ui.copy.setEnabled(True)
-            self.ui.deviceinfo.setText("<b>Gefundene USB Speichersticks:</b>")
+            self.ui.deviceinfo.setText("<b>USB Speichersticks gefunden</b>")
         else: 
             self.ui.copy.setEnabled(False)
             if self.searchinfo == "SYSUSB":
                 self.ui.deviceinfo.setText("<b>Es wurde nur der Systemdatenträger gefunden!</b>")
             elif self.searchinfo == "NOLIVE":
-                self.ui.deviceinfo.setText("<b>USB Kopie von installierten Systemen nicht unterstützt!</b>")
+                self.ui.deviceinfo.setText("<b>Kopie von installierten Systemen nicht unterstützt!</b>")
             elif self.searchinfo == "LOCKED":
                 self.ui.deviceinfo.setText("<b>Der gefundene USB Datenträger ist gesperrt!</b>")
             else:
@@ -174,7 +213,7 @@ class MeinDialog(QtWidgets.QDialog):
         item.comboBox.addItem("4 GB")
         item.comboBox.addItem("8 GB")
         item.comboBox.addItem("16 GB")
-        item.comboBox.setFixedWidth(180)
+        item.comboBox.setFixedWidth(200)
         item.comboBox.setCurrentIndex(2)
         item.comboBox.currentIndexChanged.connect(lambda: self.checkSize(item))
         
@@ -215,20 +254,19 @@ class MeinDialog(QtWidgets.QDialog):
    
    
    
-   
-   
-   
-   
-   
-   
-   
       
     def checkDevice(self, dev):
         """this function builds a list 
         of all found and confirmed usb devices 
         """
+        if self.ui.isousb.isChecked():
+            copylife = "False"
+        else:
+            copylife = "True"
         
-        answer = Popen(["./getflashdrive.sh","check", dev ], stdout=PIPE)
+        
+        
+        answer = Popen(["./getflashdrive.sh","check", dev, copylife ], stdout=PIPE)
         answer = str(answer.communicate()[0])  # das shellscript antwortet immer mit dem namen der datei die die informationen beinhaltet
         answerlist= answer.split(';')    #  "0 $USB; 1 $DEVICEVENDOR; 2 $DEVICEMODEL; 3 $DEVICESIZE; 4 $USBBYTESIZE"
         print answerlist
@@ -265,13 +303,9 @@ class MeinDialog(QtWidgets.QDialog):
         return 
  
     
-    
-    
-    
-    
+
     
     def checkSize(self, item):
-   
         devicesize = int(item.size)/1024/1024
         sharesize = self.getShareSize(item)
         
@@ -297,9 +331,7 @@ class MeinDialog(QtWidgets.QDialog):
             return False
         
 
- 
-  
-        
+
     def getShareSize(self, item):
         sharesize=str(item.comboBox.currentText())
         if sharesize == "0.5 GB":
@@ -317,13 +349,23 @@ class MeinDialog(QtWidgets.QDialog):
         return sharesize
             
             
-            
-            
-            
-            
-            
+             
     def startCopy(self):
         items = self.get_list_widget_items()
+        
+        if self.ui.isousb.isChecked():
+            if self.isolocation != "":
+                if os.path.isfile(self.isolocation):
+                    print("iso check ok")
+                else:
+                    self.ui.isofilename.setText("<b>Bitte wählen sie eine ISO Datei!</b>")
+                    return
+            else:
+                self.ui.isofilename.setText("<b>Bitte wählen sie eine ISO Datei!</b>")
+                return    
+        
+
+        
         if items:
             for item in items:
                 item.comboBox.setEnabled(False)
@@ -339,9 +381,6 @@ class MeinDialog(QtWidgets.QDialog):
             return
                 
      
-     
-
-
     def onAbbrechen(self):    # Exit button - remove ALL lockfiles
         print "Beende alle Prozesse"
         for i in self.proposed:
@@ -358,6 +397,14 @@ class MeinDialog(QtWidgets.QDialog):
         sys.exit(0)
 
 
+
+
+
+
+
+
+
+
 class  Worker(QtCore.QObject):
     def __init__(self, meindialog):
         super(Worker, self).__init__()
@@ -365,6 +412,7 @@ class  Worker(QtCore.QObject):
     
     processed = QtCore.pyqtSignal(int,QtWidgets.QListWidgetItem,str)
     finished = QtCore.pyqtSignal()
+    
     
     def doCopy(self):
         if self.meindialog.ui.copydata.checkState():
@@ -376,9 +424,18 @@ class  Worker(QtCore.QObject):
             update = True
         else:
             update = False
-        
-        
-        
+            
+            
+        if self.meindialog.ui.isousb.isChecked():
+            update = False
+            copydata = False
+            method = "iso"
+        else:
+            method = "copy"
+            self.isolocation = "none"
+            
+            
+            
         
         items = self.meindialog.get_list_widget_items()
         for item in items:
@@ -386,7 +443,6 @@ class  Worker(QtCore.QObject):
             self.processed.emit(0,item,'LOCK') #lock UI on process start
             
             iteminfo = item.info.text().replace("(","").replace(")","").replace("  "," ").replace("   ","").replace(" ","-")    #get rid of spaces an special chars in order to pass it as parameter - i know there is a better way ;-)
-            method = "copy"
             
             completed = float(0)
             if update is True:   #less steps
@@ -395,7 +451,7 @@ class  Worker(QtCore.QObject):
                 increment = float(1.3)
                 
          
-            p=Popen(["./getflashdrive.sh",str(method),str(item.sharesize), str(copydata), str(item.id), str(iteminfo), str(update)],stdout=PIPE, stderr=STDOUT, bufsize=1, shell=False)
+            p=Popen(["./getflashdrive.sh",str(method),str(item.sharesize), str(copydata), str(item.id), str(iteminfo), str(update), str(self.meindialog.isolocation)],stdout=PIPE, stderr=STDOUT, bufsize=1, shell=False)
             
             with p.stdout:
                 for line in iter(p.stdout.readline, b''):

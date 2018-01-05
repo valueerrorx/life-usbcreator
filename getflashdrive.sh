@@ -2,6 +2,21 @@
 # by: thomas michael weissel
 # you may use and alter this script - please report fixes and enchancements to valueerror@gmail.com 
 # or to the google+ community "Free Open Source Software in Schools"
+#
+#   this bashscript is started via usbcreator.py which collects all the neccesary information
+#
+#  ./getflashdrive.sh",str(method),str(item.sharesize), str(copydata), str(item.id), str(iteminfo), str(update), str(self.isolocation) 
+#   
+#   method:  copy / iso / check
+#   sharesize:   500 / 1000 / 8000 
+#   copydata:  True / False
+#   item.id:   sda / sdb / sdc
+#   iteminfo:   adata s102 
+#   update:    True / False
+#   self.isolocation:   PathToIsoFile /home/student/life.iso
+#
+#
+
 
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   #directory of this script
@@ -57,10 +72,10 @@ then
         # ist alles ok kann die geräte information in die device lock.file geschrieben werden - diese info wird vom python programm ausgelesen
         ISCOW=$(df -h |grep cow |wc -l)
         ISAUFS=$(df -h |grep aufs |wc -l)
-        if [[( $ISCOW = "0" ) && ( $ISAUFS = "0" ) ]];
+        if [[( $ISCOW = "0" ) && ( $ISAUFS = "0" ) && ( $COPYLIFE = "True" ) ]];
         then
             touch ${DIR}/${USB}.lock 
-            printf "$USB;NOLIVE"  #dies ist kein live system.. usbkopie von installierten systemen nicht möglich
+            printf "$USB;NOLIVE"  #dies ist kein live system.. usbkopie von installierten systemen nicht möglich  (ausser von ISO dateien)
             exit 0
         fi
         SYSMOUNT1=$(findmnt -nr -o target -S /dev/${USB}1)          #on the masterflashdrive (created from life.iso) this would be the systempartition
@@ -82,7 +97,8 @@ then
     #---------------------------------------------------------#"
     #N=1
     #CHECKAGAIN=0
-    USB=$2     ## Popen(["./getflashdrive.sh","check", dev ]   $1 = check $2 = dev (sda)
+    USB=$2     ## Popen(["./getflashdrive.sh","check", dev ]   $1 = check $2 = dev (sda)  $3 = copylife (True)
+    COPYLIFE=$3
     
     findusb(){
         #  check if proposed usb device is actually a usb device
@@ -126,7 +142,7 @@ fi
 #---------------------------------------------------------#"
 #      PREPARE DEVICE      START                          #"
 #---------------------------------------------------------#" 
-if  [[( $1 = "copy" ) ]]
+if  [[( $1 = "copy" ) || ( $1 = "iso" )  ]]
 then
     LIFESIZE="4000"    #darf nicht grösser sein. fat32 beschränkung für squashfs datei
     SHARESIZE=$2
@@ -134,6 +150,8 @@ then
     USB=$4
     TITLE=$5
     UPDATE=$6
+    ISOFILE=$7
+    
     TITLE=${TITLE//[-]/ }
     SDX="/dev/$USB" 
     
@@ -351,6 +369,10 @@ then
     
     
     
+    if  [[( $1 = "iso" ) ]]  
+    then
+        sudo mount -o loop $ISOFILE /cdrom
+    fi
     
     FILENUMBER=$(ls -Rahl /cdrom/ |wc -l)
     ##############
@@ -362,7 +384,9 @@ then
     sleep 0.5
     ##############
     rsync -a -h --info=progress2,stats --no-inc-recursive /cdrom/ $MOUNTPOINT | stdbuf -oL tr '\r' '\n' | stdbuf -oL tr -s " " | stdbuf -oL cut -d " " -f 2-4
-   
+    
+
+    
     
     
     
